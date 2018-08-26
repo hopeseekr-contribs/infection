@@ -32,15 +32,21 @@ final class InitialTestsRunner
     private $eventDispatcher;
 
     /**
+     * @var int
+     */
+    private $errorTimeout;
+
+    /**
      * InitialTestsRunner constructor.
      *
      * @param ProcessBuilder $processBuilder
      * @param EventDispatcherInterface $eventDispatcher
      */
-    public function __construct(ProcessBuilder $processBuilder, EventDispatcherInterface $eventDispatcher)
+    public function __construct(ProcessBuilder $processBuilder, EventDispatcherInterface $eventDispatcher, int $errorTimeout = 10)
     {
         $this->processBuilder = $processBuilder;
         $this->eventDispatcher = $eventDispatcher;
+        $this->errorTimeout = $errorTimeout;
     }
 
     public function run(string $testFrameworkExtraOptions, bool $skipCoverage, array $phpExtraOptions = []): Process
@@ -51,10 +57,28 @@ final class InitialTestsRunner
             $phpExtraOptions
         );
 
+        //Tracking Process Error Exit
+        $expirationData = (object) [
+            'time' => null,
+        ];
+
         $this->eventDispatcher->dispatch(new InitialTestSuiteStarted());
 
-        $process->run(function ($type) use ($process): void {
+        $process->run(function ($type) use ($process, $expirationData): void {
             if ($process::ERR === $type) {
+                //If already started, do not start again and let parent one run - prevent infinite loop.
+                //->isRunning calls the callback again every time there is any updated output.
+                if ($expirationData->time !== null) {
+                    return;
+                }
+
+                //Give The Error Processing Time To Fully Output
+                $expirationData->time = time() + $this->errorTimeout;
+
+                do {
+                    usleep(1000);
+                } while ($process->isRunning() && time() < $expirationData->time);
+
                 $process->stop();
             }
 
