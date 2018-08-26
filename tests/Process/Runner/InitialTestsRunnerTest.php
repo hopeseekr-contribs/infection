@@ -44,4 +44,40 @@ final class InitialTestsRunnerTest extends MockeryTestCase
 
         $testRunner->run('', false);
     }
+
+    public function test_it_ends_process(): void
+    {
+        $mockProcess = $this->getMockBuilder(Process::class)
+            ->setMethods(['run', 'stop'])
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $mockProcess->expects($this->once())
+            ->method('stop');
+
+        $mockProcess->expects($this->once())
+            ->method('run')
+            ->will($this->returnCallback(
+                function(callable  $runMethod) {
+                    $runMethod(Process::ERR);
+                }
+            ));
+
+        $processBuilder = Mockery::mock(ProcessBuilder::class);
+        $processBuilder
+            ->shouldReceive('getProcessForInitialTestRun')
+            ->withArgs(['', false, []])
+            ->andReturn($mockProcess);
+
+        $eventDispatcher = $this->getMockBuilder(EventDispatcherInterface::class)
+            ->setMethods(['dispatch'])
+            ->getMockForAbstractClass();
+
+        $eventDispatcher->expects($this->exactly(3))
+            ->method('dispatch');
+
+        $testRunner = new InitialTestsRunner($processBuilder, $eventDispatcher);
+
+        $testRunner->run('', false);
+    }
 }
