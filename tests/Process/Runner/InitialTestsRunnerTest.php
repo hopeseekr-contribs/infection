@@ -48,9 +48,11 @@ final class InitialTestsRunnerTest extends MockeryTestCase
     public function test_it_ends_process(): void
     {
         $mockProcess = $this->getMockBuilder(Process::class)
-            ->setMethods(['run', 'stop'])
+            ->setMethods(['run', 'stop', 'isRunning'])
             ->disableOriginalConstructor()
             ->getMock();
+
+        $mockProcess->method('isRunning')->willReturn(false);
 
         $mockProcess->expects($this->once())
             ->method('stop');
@@ -58,7 +60,7 @@ final class InitialTestsRunnerTest extends MockeryTestCase
         $mockProcess->expects($this->once())
             ->method('run')
             ->will($this->returnCallback(
-                function(callable  $runMethod) {
+                function (callable  $runMethod): void {
                     $runMethod(Process::ERR);
                 }
             ));
