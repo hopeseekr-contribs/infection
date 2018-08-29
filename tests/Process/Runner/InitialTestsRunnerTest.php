@@ -60,8 +60,10 @@ final class InitialTestsRunnerTest extends MockeryTestCase
         $mockProcess->expects($this->once())
             ->method('run')
             ->will($this->returnCallback(
-                function (callable  $runMethod): void {
+                function (callable  $runMethod): int {
                     $runMethod(Process::ERR);
+
+                    return 1;
                 }
             ));
 

@@ -47,6 +47,7 @@ final class InitialTestsRunner
 
     public function run(string $testFrameworkExtraOptions, bool $skipCoverage, array $phpExtraOptions = []): Process
     {
+        /** @var Process $process */
         $process = $this->processBuilder->getProcessForInitialTestRun(
             $testFrameworkExtraOptions,
             $skipCoverage,
