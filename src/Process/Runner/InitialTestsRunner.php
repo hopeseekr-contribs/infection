@@ -21,6 +21,8 @@ use Symfony\Component\Process\Process;
  */
 final class InitialTestsRunner
 {
+    private const ERROR_TIMEOUT = 10;
+
     /**
      * @var ProcessBuilder
      */
@@ -32,21 +34,15 @@ final class InitialTestsRunner
     private $eventDispatcher;
 
     /**
-     * @var int
-     */
-    private $errorTimeout;
-
-    /**
      * InitialTestsRunner constructor.
      *
      * @param ProcessBuilder $processBuilder
      * @param EventDispatcherInterface $eventDispatcher
      */
-    public function __construct(ProcessBuilder $processBuilder, EventDispatcherInterface $eventDispatcher, int $errorTimeout = 10)
+    public function __construct(ProcessBuilder $processBuilder, EventDispatcherInterface $eventDispatcher)
     {
-        $this->processBuilder = $processBuilder;
+        $this->processBuilder  = $processBuilder;
         $this->eventDispatcher = $eventDispatcher;
-        $this->errorTimeout = $errorTimeout;
     }
 
     public function run(string $testFrameworkExtraOptions, bool $skipCoverage, array $phpExtraOptions = []): Process
@@ -73,7 +69,7 @@ final class InitialTestsRunner
                 }
 
                 //Give The Error Processing Time To Fully Output
-                $expirationData->time = time() + $this->errorTimeout;
+                $expirationData->time = time() + static::ERROR_TIMEOUT;
 
                 do {
                     usleep(1000);
