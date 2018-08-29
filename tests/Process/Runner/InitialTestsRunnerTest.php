@@ -52,7 +52,17 @@ final class InitialTestsRunnerTest extends MockeryTestCase
             ->disableOriginalConstructor()
             ->getMock();
 
-        $mockProcess->method('isRunning')->willReturn(false);
+        $timeData = (object) [
+            'start'     => time(),
+            'runMethod' => null
+        ];
+
+        $mockProcess->method('isRunning')
+            ->willReturnCallback(function () use ($timeData) {
+                $runMethod = $timeData->runMethod;
+                $runMethod(Process::ERR);
+                return false;
+            });
 
         $mockProcess->expects($this->once())
             ->method('stop');
@@ -60,7 +70,9 @@ final class InitialTestsRunnerTest extends MockeryTestCase
         $mockProcess->expects($this->once())
             ->method('run')
             ->will($this->returnCallback(
-                function (callable  $runMethod): int {
+                function (callable  $runMethod) use ($timeData): int {
+                    $timeData->runMethod = $runMethod;
+
                     $runMethod(Process::ERR);
 
                     return 1;
