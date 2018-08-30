@@ -72,9 +72,9 @@ final class InitialTestsRunner
                 //Give The Error Processing Time To Fully Output
                 $expirationData->time = time() + static::ERROR_TIMEOUT;
 
-                do {
-                    usleep(1000);
-                } while ($process->isRunning() && time() < $expirationData->time);
+                while ($process->isRunning() && time() < $expirationData->time) {
+                    usleep(100);
+                };
 
                 $process->stop();
             }
